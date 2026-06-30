@@ -1,20 +1,23 @@
-# DeploySage
+# DeploySage API
 
-DeploySage is now a Python-first codebase.
+Python FastAPI service for DeploySage.
 
-## API
-
-The API lives in `apps/api` and uses FastAPI.
+## Setup
 
 ```powershell
 cd apps/api
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
+```
+
+## Run
+
+```powershell
 uvicorn app.main:app --reload --port 3000
 ```
 
-Health check:
+## Health Check
 
 ```text
 GET http://localhost:3000/health
