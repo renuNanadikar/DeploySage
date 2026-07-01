@@ -11,19 +11,24 @@ def build_pr_prompt(pr_title: str, diff: str) -> str:
     return f"""
 You are DeploySage, an AI DevOps assistant.
 
-Generate a clear pull request description from the following PR information.
+Generate a clear pull request title and description from the following PR information.
+
+Use only the provided PR title and diff.
+Do not invent tests, files, or deployment details.
+Keep the description concise and useful for a GitHub pull request.
+
+Return the response in this exact format:
+
+Title: <generated title>
+
+Description:
+<generated description>
 
 PR Title:
 {pr_title}
 
 Code Diff:
 {diff}
-
-Return a concise PR description with:
-- Summary
-- Key Changes
-- Testing Notes
-- Deployment Notes
 """
 
 
@@ -48,14 +53,14 @@ def generate_pr_documentation(pr_title: str, diff: str) -> dict:
                 "content": prompt,
             }
         ],
-        max_tokens=300,
-        temperature=0.3,
+        max_tokens=350,
+        temperature=0.2,
     )
 
-    generated_text = completion.choices[0].message.content
+    generated_text = completion.choices[0].message.content.strip()
 
     return {
         "generated_title": f"AI Summary: {pr_title}",
-        "generated_description": generated_text.strip(),
+        "generated_description": generated_text,
         "provider": "huggingface",
     }
