@@ -1,0 +1,61 @@
+name: DeploySage PR Analysis
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  collect-pr-data:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Show PR metadata
+        run: |
+          echo "Repository owner: ${{ github.repository_owner }}"
+          echo "Repository full name: ${{ github.repository }}"
+          echo "PR number: ${{ github.event.pull_request.number }}"
+          echo "PR title: ${{ github.event.pull_request.title }}"
+          echo "Base branch: ${{ github.base_ref }}"
+          echo "Head branch: ${{ github.head_ref }}"
+
+      - name: Create PR diff
+        run: |
+          git fetch origin ${{ github.base_ref }}
+          git diff origin/${{ github.base_ref }}...HEAD > pr.diff
+          echo "Diff created."
+          wc -l pr.diff
+
+      - name: Build DeploySage payload
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          diff = Path("pr.diff").read_text(encoding="utf-8", errors="ignore")
+
+          payload = {
+              "repository_owner": os.environ["REPOSITORY_OWNER"],
+              "repository_name": os.environ["REPOSITORY_NAME"],
+              "pr_number": int(os.environ["PR_NUMBER"]),
+              "pr_title": os.environ["PR_TITLE"],
+              "diff": diff[:5000],
+          }
+
+          print(json.dumps(payload, indent=2))
+          PY
+        env:
+          REPOSITORY_OWNER: ${{ github.repository_owner }}
+          REPOSITORY_NAME: ${{ github.event.repository.name }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
