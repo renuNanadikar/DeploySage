@@ -14,3 +14,5 @@ class PRAnalyzeResponse(BaseModel):
     generated_description: str
     provider: str
     github_ready: bool
+
+#Schemas validate request and response data. They make the API predictable and generate automatic docs.#
