@@ -7,12 +7,14 @@ Use only the provided PR title and diff.
 Do not invent tests, files, or deployment details.
 Keep the description concise and useful for a GitHub pull request.
 
-Return the response in this exact format:
+Return only valid JSON with exactly these keys:
 
-Title: <generated title>
+{{
+  "title": "<generated title>",
+  "description": "<generated description>"
+}}
 
-Description:
-<generated description>
+Do not wrap the JSON in Markdown fences or add any other text.
 
 PR Title:
 {pr_title}
