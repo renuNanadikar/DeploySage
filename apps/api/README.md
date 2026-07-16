@@ -22,3 +22,11 @@ uvicorn app.main:app --reload --port 3000
 ```text
 GET http://localhost:3000/health
 ```
+
+## GitHub Actions configuration
+
+The PR-analysis workflow calls this service and then updates the pull request
+with the returned `generated_title` and `generated_description`. Set the
+repository variable `DEPLOYSAGE_API_URL` to the public base URL of this API
+(for example, `https://deploysage.example.com`). The workflow already declares
+the required `pull-requests: write` permission.

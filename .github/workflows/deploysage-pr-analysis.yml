@@ -7,7 +7,7 @@ on:
 
 permissions:
   contents: read
-  pull-requests: read
+  pull-requests: write
 
 jobs:
   collect-pr-data:
@@ -52,10 +52,47 @@ jobs:
               "diff": diff[:5000],
           }
 
-          print(json.dumps(payload, indent=2))
+          Path("deploysage-payload.json").write_text(
+              json.dumps(payload), encoding="utf-8"
+          )
           PY
         env:
           REPOSITORY_OWNER: ${{ github.repository_owner }}
           REPOSITORY_NAME: ${{ github.event.repository.name }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           PR_TITLE: ${{ github.event.pull_request.title }}
+
+      - name: Generate PR documentation
+        id: documentation
+        env:
+          DEPLOYSAGE_API_URL: ${{ vars.DEPLOYSAGE_API_URL }}
+        run: |
+          if [ -z "$DEPLOYSAGE_API_URL" ]; then
+            echo "Repository variable DEPLOYSAGE_API_URL is required."
+            exit 1
+          fi
+
+          response=$(curl --fail-with-body --silent --show-error \
+            --request POST "${DEPLOYSAGE_API_URL%/}/api/pr/analyze" \
+            --header "Content-Type: application/json" \
+            --data @deploysage-payload.json)
+
+          {
+            echo "response<<EOF"
+            echo "$response"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Update pull request title and description
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          DOCUMENTATION: ${{ steps.documentation.outputs.response }}
+        run: |
+          title=$(echo "$DOCUMENTATION" | jq --raw-output '.generated_title')
+          description=$(echo "$DOCUMENTATION" | jq --raw-output '.generated_description')
+
+          gh api --method PATCH \
+            "/repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}" \
+            --raw-field "title=$title" \
+            --raw-field "body=$description"
