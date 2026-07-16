@@ -75,6 +75,7 @@ jobs:
           response=$(curl --fail-with-body --silent --show-error \
             --request POST "${DEPLOYSAGE_API_URL%/}/api/pr/analyze" \
             --header "Content-Type: application/json" \
+            --header "ngrok-skip-browser-warning: 1" \
             --data @deploysage-payload.json)
 
           {
